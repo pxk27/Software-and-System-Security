@@ -6,8 +6,25 @@ from scapy.all import *
 from scapy.all import IP,TCP
 import psutil
 
+def help_window():
+    help_info_window = tkinter.Tk()
+    help_info_window.title("help")
+    help_info_window.geometry("500x500")
+    help_info =  "基于python开发的类似抓包工具，python版本3.6.2\n" \
+                 "（一）选择网卡，默认抓取所有网卡的数据包\n" \
+                 "（二）填写BPF表达式，空白代表不使用BPF表达式\n" \
+                 "（三）点击“开始抓包”按钮，开始抓包；点击“结束抓包”按钮，抓取的包会出现在下方方框中\n" \
+                 "（四）每个窗口下双击对应的包，均可以查看详细信息\n" \
+                 "（五）可以基于IP+Port的TCP流进行流跟踪，选择要跟踪的包，点击“流跟踪”按钮\n" \
+                 " PS：如果有错误出现，会弹窗报告\n" 
+    help_info_text = tkinter.Text(help_info_window)
+    help_info_text.insert(INSERT, help_info)
+    help_info_text.place(relheight=1, relwidth=1)
+    help_info_text.config(state=tkinter.DISABLED)
+    help_info_window.mainloop()
+
 def follow_stream():
-    def show_follow_packet():
+    def show_follow_packet(whatever):
         index = listbox_stream.curselection()[0]
         index_in_packet = follow_index[index]
         follow_info_window = tkinter.Tk()
@@ -35,6 +52,7 @@ def follow_stream():
     follow_index = []
     index = listbox.curselection()[0]
     select_packet = package[index]
+    print(select_packet.summary())
     if IP in select_packet:
         select_src = select_packet[IP].src
         select_dst = select_packet[IP].dst
@@ -43,18 +61,18 @@ def follow_stream():
         select_dst = select_packet.dst
 
     for index, item in enumerate(package):
-        if IP in package:
+        if IP in item:
             src = item[IP].src
             dst = item[IP].dst
         else:
             src = item.src
             dst = item.dst
         if select_src == src and select_dst == dst:
-            if TCP in select_packet:
+            if TCP in item:
                 if item[TCP].sport == select_packet[TCP].sport:
                     pass
         elif select_src == dst and select_dst == src:
-            if TCP in select_packet:
+            if TCP in item:
                 if item[TCP].sport == select_packet[TCP].dport:
                     pass
         else:
@@ -88,20 +106,13 @@ def get_network_card():
 
 def start_capture():
     global sniffer
-    if BPF_entry.get() != "":
-        # print("not emptry")
-        try:
-            arch.common.compile_filter(BPF_entry.get())
-        except:
-            messagebox.showerror(title="error", message="BPF表达式错误！")
-            return
     try:
         NC_var = NC_variable.get()
         if NC_var == "选择网卡，默认全部":
             sniffer = AsyncSniffer(store=True, filter=BPF_entry.get())
         else:
             sniffer = AsyncSniffer(iface=NC_var, store=True, filter=BPF_entry.get())
-        start_button = tkinter.Button(top, text="正在抓包", command=start_capture).place(relx=0.05, rely=0.05, relwidth=0.1, relheight=0.05)
+        tkinter.Button(top, text="正在抓包", command=start_capture).place(relx=0.05, rely=0.05, relwidth=0.1, relheight=0.05)
         sniffer.start()
         listbox.delete(0, END)
     except:
@@ -126,7 +137,7 @@ top.geometry("1024x600")
 start_button = tkinter.Button(top, text="开始抓包", command=start_capture)
 end_button = tkinter.Button(top, text="结束抓包", command=end_capture)
 follow_stream_button = tkinter.Button(top, text="流追踪", command=follow_stream)
-help_button = tkinter.Button(top, text="帮助")
+help_button = tkinter.Button(top, text="帮助", command=help_window)
 start_button.place(relx=0.05, rely=0.05, relwidth=0.1, relheight=0.05)
 end_button.place(relx=0.2, rely=0.05, relwidth=0.1, relheight=0.05)
 follow_stream_button.place(relx=0.35, rely=0.05, relwidth=0.1, relheight=0.05)
