@@ -52,7 +52,7 @@ def follow_stream():
     follow_index = []
     index = listbox.curselection()[0]
     select_packet = package[index]
-    print(select_packet.summary())
+    # print(select_packet.summary())
     if IP in select_packet:
         select_src = select_packet[IP].src
         select_dst = select_packet[IP].dst
